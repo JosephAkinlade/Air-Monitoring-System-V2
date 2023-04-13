@@ -6,11 +6,12 @@ typedef struct
 {
   float temp;
   float hum;
-  uint16_t NO2;
-  uint16_t NH3;
+  float NO2;
+  float NH3;
   float CO;
-  uint16_t PM2_5;
-  uint16_t PM10;
+  float CO2;
+  float PM2_5;
+  float PM10;
 }SensorData_t;
 
 //RTOS Handles
@@ -83,11 +84,11 @@ void ApplicationTask(void* pvParameters)
         lcd.print(" %");
         lcd.setCursor(0,2);
         lcd.print("NO2 conc: ");
-        lcd.print(sensorData.NO2);
+        lcd.print((uint16_t)sensorData.NO2);
         lcd.print(" PPM");
         lcd.setCursor(0,3);
         lcd.print("NH3 conc: ");
-        lcd.print(sensorData.NH3);
+        lcd.print((uint16_t)sensorData.NH3);
         lcd.print(" PPM");
         if(millis() - prevTime >= 4000)
         {
@@ -103,11 +104,15 @@ void ApplicationTask(void* pvParameters)
         lcd.print(sensorData.CO);
         lcd.print(" PPM");
         lcd.setCursor(0,1);
-        lcd.print("PM2.5(ug/m3): ");
-        lcd.print(sensorData.PM2_5);
+        lcd.print("CO2 conc: ");
+        lcd.print(sensorData.CO2);
+        lcd.print(" PPM");
         lcd.setCursor(0,2);
+        lcd.print("PM2.5(ug/m3): ");
+        lcd.print((uint16_t)sensorData.PM2_5);
+        lcd.setCursor(0,3);
         lcd.print("PM10(ug/m3): ");
-        lcd.print(sensorData.PM10);
+        lcd.print((uint16_t)sensorData.PM10);
         if(millis() - prevTime >= 4000)
         {
           displayState = displayState1;
@@ -123,16 +128,45 @@ void NodeTask(void* pvParameters)
 {
   vTaskSuspend(NULL);
   static MNI mni(&Serial2);
-  static SensorData_t sensorData;
+  static SensorData_t sensorData = {0};
   uint32_t prevTime = millis();
-  uint8_t txBuffer = 0xAA;
-
+  uint8_t query = 0xAA;
+  const uint8_t txDataSize = 1;
+  const uint8_t rxBufferSize = sizeof(sensorData);
+  
   while(1)
   {
     if(millis() - prevTime >= 2500)
     {
-      mni.TransmitData(&txBuffer,sizeof(txBuffer));
+      mni.TransmitData(&query,txDataSize);
+      prevTime = millis();
     }
-  }
-  
+
+    if(mni.IsReceiverReady(rxBufferSize))
+    {
+      mni.ReceiveData(&sensorData,rxBufferSize);
+      //Debug
+      Serial.print("Temp: ");
+      Serial.println(sensorData.temp);
+      Serial.print("Hum: ");
+      Serial.println(sensorData.hum);
+      Serial.print("NO2: ");
+      Serial.println((uint16_t)sensorData.NO2);
+      Serial.print("NH3: ");
+      Serial.println((uint16_t)sensorData.NH3);
+      Serial.print("CO: ");
+      Serial.println(sensorData.CO);
+      Serial.print("CO2: ");
+      Serial.println(sensorData.CO2);
+      Serial.print("PM 2.5 (ug/m3): ");
+      Serial.println((uint16_t)sensorData.PM2_5);
+      Serial.print("PM 10.0 (ug/m3): ");
+      Serial.println((uint16_t)sensorData.PM10);
+      //Place sensor data in Queue
+      if(xQueueSend(nodeToAppQueue,&sensorData,0) == pdPASS)
+      {
+        Serial.println("--Data successfully sent to Application Task");
+      }
+    }
+  } 
 }

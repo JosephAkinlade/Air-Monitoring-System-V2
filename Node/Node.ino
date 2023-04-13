@@ -6,19 +6,18 @@
 #include "mics6814.h"
 #include "MQ7.h"
 
-
 #define BME280_ADDR 0x76
 
 typedef struct
 {
   float temp;
   float hum;
-  uint16_t NO2;
-  uint16_t NH3;
+  float NO2;
+  float NH3;
   float CO;
   float CO2;
-  uint16_t PM2_5;
-  uint16_t PM10;
+  float PM2_5;
+  float PM10;
 }SensorData_t;
 
 namespace Pin
@@ -57,58 +56,36 @@ void setup() {
   bmeSensor.begin(BME280_ADDR);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  Get_SensorData(sensorData); 
-  //Debug
-  Serial.print("Temp: ");
-  Serial.println(sensorData.temp);
-  Serial.print("Hum: ");
-  Serial.println(sensorData.hum);
-  Serial.print("NO2: ");
-  Serial.println(sensorData.NO2);
-  Serial.print("NH3: ");
-  Serial.println(sensorData.NH3);
-  Serial.print("CO: ");
-  Serial.println(sensorData.CO);
-  Serial.print("CO2: ");
-  Serial.println(sensorData.CO2);
-  Serial.print("PM 2.5 (ug/m3): ");
-  Serial.println(sensorData.PM2_5);
-  Serial.print("PM 10.0 (ug/m3): ");
-  Serial.println(sensorData.PM10);
-  delay(1000);
-  
-//  nodeSerial.listen();
-// 
-//  if(mni.IsReceiverReady(sizeof(rxBuffer)))
-//  {
-//    mni.ReceiveData(rxBuffer,sizeof(rxBuffer));
-//    Serial.println(rxBuffer);
-//    if(rxBuffer == 0xAA)
-//    {
-//      Serial.println("--Query Received");
-//    
-//      Get_SensorData(sensorData); 
-//      //Debug
-//      Serial.print("Temp: ");
-//      Serial.println(sensorData.temp);
-//      Serial.print("Hum: ");
-//      Serial.println(sensorData.hum);
-//      Serial.print("NO2: ");
-//      Serial.println(sensorData.NO2);
-//      Serial.print("NH3: ");
-//      Serial.println(sensorData.NH3);
-//      Serial.print("CO: ");
-//      Serial.println(sensorData.CO);
-//      Serial.print("PM 2.5 (ug/m3): ");
-//      Serial.println(sensorData.PM2_5);
-//      Serial.print("PM 10.0 (ug/m3): ");
-//      Serial.println(sensorData.PM10);
-//  
-//      mni.TransmitData(&sensorData,sizeof(sensorData));
-//    }  
-//  }
+void loop() 
+{
+  nodeSerial.listen();
+  if(mni.IsReceiverReady(1))
+  {
+    mni.ReceiveData(&rxBuffer,1);
+    if(rxBuffer == 0xAA)
+    {
+      Serial.println("--Query Received");
+      Get_SensorData(sensorData); 
+      //Debug
+      Serial.print("Temp: ");
+      Serial.println(sensorData.temp);
+      Serial.print("Hum: ");
+      Serial.println(sensorData.hum);
+      Serial.print("NO2: ");
+      Serial.println(sensorData.NO2);
+      Serial.print("NH3: ");
+      Serial.println(sensorData.NH3);
+      Serial.print("CO: ");
+      Serial.println(sensorData.CO);
+      Serial.print("CO2: ");
+      Serial.println(sensorData.CO2);
+      Serial.print("PM 2.5 (ug/m3): ");
+      Serial.println(sensorData.PM2_5);
+      Serial.print("PM 10.0 (ug/m3): ");
+      Serial.println(sensorData.PM10);  
+      mni.TransmitData(&sensorData,sizeof(sensorData));
+    }  
+  }
 }
 
 void Get_SensorData(SensorData_t& data)
