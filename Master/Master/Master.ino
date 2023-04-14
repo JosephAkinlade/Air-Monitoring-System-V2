@@ -144,7 +144,9 @@ void NodeTask(void* pvParameters)
 
     if(mni.IsReceiverReady(rxBufferSize))
     {
+      vTaskSuspend(applicationTaskHandle);
       mni.ReceiveData(&sensorData,rxBufferSize);
+      vTaskResume(applicationTaskHandle);
       //Debug
       Serial.print("Temp: ");
       Serial.println(sensorData.temp);
