@@ -141,12 +141,11 @@ void NodeTask(void* pvParameters)
       mni.TransmitData(&query,txDataSize);
       prevTime = millis();
     }
-
+    
     if(mni.IsReceiverReady(rxBufferSize))
     {
       vTaskSuspend(applicationTaskHandle);
       mni.ReceiveData(&sensorData,rxBufferSize);
-      vTaskResume(applicationTaskHandle);
       //Debug
       Serial.print("Temp: ");
       Serial.println(sensorData.temp);
@@ -169,6 +168,7 @@ void NodeTask(void* pvParameters)
       {
         Serial.println("--Data successfully sent to Application Task");
       }
-    }
+      vTaskResume(applicationTaskHandle);
+    } 
   } 
 }
