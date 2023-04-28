@@ -309,7 +309,7 @@ void NodeTask(void* pvParameters)
       //Place sensor data in the Node-MQTT Queue
       if(xQueueSend(nodeToCloudQueue,&sensorData,0) == pdPASS)
       {
-        Serial.println("--Data successfully sent to MQTT task\n");
+        Serial.println("--Data successfully sent to cloud task\n");
       }
       else
       {
@@ -331,8 +331,8 @@ void DataToCloudTask(void* pvParameters)
   char prevChannelId[SIZE_CHANNEL_ID] = {0};
   char prevApiKey[SIZE_API_KEY] = {0};
 
-  preferences.getBytes("1",prevChannelId,SIZE_CHANNEL_ID);
-  preferences.getBytes("2",prevApiKey,SIZE_API_KEY); 
+  preferences.getBytes("0",prevChannelId,SIZE_CHANNEL_ID);
+  preferences.getBytes("1",prevApiKey,SIZE_API_KEY); 
   
   uint32_t idInt = 0;
   uint32_t prevUploadTime = millis();

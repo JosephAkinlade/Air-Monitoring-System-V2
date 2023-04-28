@@ -5,8 +5,7 @@ NODE:
 4. BME280 (SCL: A5, SDA: A4)
 5. MQ7 (VOUT: A3)
 6. NodeSerial(RX: 6, TX: 7)
-7. Buzzer (2)
-8. MQ135 (VOUT: A6)
+7. MQ135 (VOUT: A6)
 
 MASTER:
 1. LCD (SCL: 22, SDA: 21)
