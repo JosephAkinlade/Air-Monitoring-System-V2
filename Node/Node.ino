@@ -1,10 +1,10 @@
 #include <SoftwareSerial.h>
 #include <Adafruit_BME280.h>
 #include <PMS.h>
+#include <MQ135.h>
 #include "MNI.h"
 #include "mics6814.h"
 #include "MQ7.h"
-
 
 #define BME280_ADDR 0x76
 
@@ -12,11 +12,12 @@ typedef struct
 {
   float temp;
   float hum;
-  uint16_t NO2;
-  uint16_t NH3;
+  float NO2;
+  float NH3;
   float CO;
-  uint16_t PM2_5;
-  uint16_t PM10;
+  float CO2;
+  float PM2_5;
+  float PM10;
 }SensorData_t;
 
 namespace Pin
@@ -25,6 +26,7 @@ namespace Pin
   const uint8_t NH3Pin = A1;
   const uint8_t COPin = A2;
   const uint8_t MQ7Sensor = A3;
+  const uint8_t MQ135Pin = A6;
   const uint8_t nodeRx = 6;
   const uint8_t nodeTx = 7;
   const uint8_t pmsTx = 9;
@@ -40,6 +42,7 @@ PMS pms(pmsSerial);
 PMS::DATA pmsData;
 MNI mni(&nodeSerial);
 MQ7 mq7(Pin::MQ7Sensor);
+MQ135 mq135(Pin::MQ135Pin);
 
 SensorData_t sensorData = {0};
 uint8_t rxBuffer = 0;
@@ -53,18 +56,15 @@ void setup() {
   bmeSensor.begin(BME280_ADDR);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void loop() 
+{
   nodeSerial.listen();
- 
-  if(mni.IsReceiverReady(sizeof(rxBuffer)))
+  if(mni.IsReceiverReady(1))
   {
-    mni.ReceiveData(rxBuffer,sizeof(rxBuffer));
-    Serial.println(rxBuffer);
+    mni.ReceiveData(&rxBuffer,1);
     if(rxBuffer == 0xAA)
     {
       Serial.println("--Query Received");
-    
       Get_SensorData(sensorData); 
       //Debug
       Serial.print("Temp: ");
@@ -77,11 +77,12 @@ void loop() {
       Serial.println(sensorData.NH3);
       Serial.print("CO: ");
       Serial.println(sensorData.CO);
+      Serial.print("CO2: ");
+      Serial.println(sensorData.CO2);
       Serial.print("PM 2.5 (ug/m3): ");
       Serial.println(sensorData.PM2_5);
       Serial.print("PM 10.0 (ug/m3): ");
-      Serial.println(sensorData.PM10);
-  
+      Serial.println(sensorData.PM10);  
       mni.TransmitData(&sensorData,sizeof(sensorData));
     }  
   }
@@ -94,6 +95,7 @@ void Get_SensorData(SensorData_t& data)
   data.NO2 = micsSensor.GetValue(MICS6814::GAS::NO2);
   data.NH3 = micsSensor.GetValue(MICS6814::GAS::NH3);
   data.CO = mq7.GetPPM();
+  data.CO2 = mq135.getPPM() * 100.0;
   pmsSerial.listen();
   pms.requestRead();
   if(pms.readUntil(pmsData))
